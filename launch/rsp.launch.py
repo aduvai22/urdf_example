@@ -25,8 +25,21 @@ def generate_launch_description():
         parameters=[{'robot_description': robot_description_raw}] # add other parameters here if required
     )
 
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        arguments=['-d', '/home/adnana/ros2_ws/src/urdf_example/rviz/rviz_config.rviz'],
+    )
+
+    node_joint_state_publisher = Node(
+        package='joint_state_publisher_gui',
+        executable='joint_state_publisher_gui',
+        output='screen',
+    )
 
     # Run the node
     return LaunchDescription([
-        node_robot_state_publisher
+        node_robot_state_publisher, 
+        node_joint_state_publisher,
+        rviz_node,
     ])

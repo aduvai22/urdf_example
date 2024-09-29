@@ -19,7 +19,7 @@
     <!-- A simple fixed joint from our empty world link, to our base. -->
     <!-- The base origin is offset from the world origin. -->
     <joint name="base_joint" type="fixed">
-        <origin xyz="3 3 0" rpy="0 0 0"/>
+        <origin xyz="1.5 1.0 0" rpy="0 0 0"/>
         <parent link="world"/>
         <child link="base_link"/>        
     </joint>
@@ -34,7 +34,7 @@
         <visual>
             <origin xyz="0 0 0.05" rpy="0 0 0"/>
             <geometry>
-                <box size="5 5 0.1" />
+                <box size="2.5 1.5 0.1" />
             </geometry>
             <material name="green">
                 <color rgba="0.2 1 0.2 1"/>
@@ -55,24 +55,24 @@
 
 
 
-    <!-- body_joint lets body_link move back and forth along the top of the base in one dimension.  -->
+    <!-- slider_joint lets slider_link move back and forth along the top of the base in one dimension.  -->
     <!-- - Origin is set to one of the top edges of the base_link box, so that our link skims across the top  -->
     <!-- - It moves along the X axis -->
     <!-- - We need to specify limits for the motion -->
-    <joint name="body_joint" type="revolute">
+    <joint name="slider_joint" type="revolute">
         <origin xyz="0.25 0 0.1" rpy="0 0 0"/>
         <parent link="base_link"/>
-        <child link="body_link"/>
+        <child link="slider_link"/>
         <axis xyz="0 0 1"/>
         <limit lower="0" upper="${2*pi}" velocity="100" effort="100"/> 
     </joint>
 
 
-    <!-- body_link is the box skimming across the top of the base. Its parameters are similar to the base_link, however: -->
+    <!-- slider_link is the box skimming across the top of the base. Its parameters are similar to the base_link, however: -->
     <!-- - Instead of explicitly describing a colour, it uses the named material "blue". It knows about "blue" that material was included in example_include.xacro. -->
     <!-- - Instead of explicitly describing the inertia, we use a macro that was defined in the example_include.xacro -->
 
-    <link name="body_link">
+    <link name="slider_link">
         <visual>
             <origin xyz="0 0 0.075" rpy="0 0 0"/>
             <geometry>
@@ -93,15 +93,15 @@
 
 
 
-    <!-- arm_joint describes the rotation of the arm and is centred around the top corner of the body box. -->
+    <!-- arm_joint describes the rotation of the arm and is centred around the top corner of the slider box. -->
     <!-- - The axis of rotation is -1 in Y, so that positive is "up" -->
     <!-- - The upper limit uses xacro's mathematical features -->
     <joint name="arm_joint" type="revolute">
         <origin xyz="0.25 0 0.15" rpy="0 0 0"/>
-        <parent link="body_link"/>
+        <parent link="slider_link"/>
         <child link="arm_link"/>
-        <axis xyz="0 1 0"/>
-        <limit lower="${-pi/2}" upper="${pi/2}" velocity="100" effort="100"/> 
+        <axis xyz="0 -1 0"/>
+        <limit lower="0" upper="${pi/2}" velocity="100" effort="100"/> 
     </joint>
 
 
@@ -114,7 +114,7 @@
     <xacro:property name="arm_radius" value="0.1" />
     <link name="arm_link">
         <visual>
-            <origin xyz="0 0 0.5" rpy="0 0 0"/>
+            <origin xyz="${arm_length/2} 0 0" rpy="0 ${pi/2} 0"/>
             <geometry>                
                 <cylinder length="${arm_length}" radius="${arm_radius}" />
             </geometry>
@@ -135,12 +135,10 @@
     <!-- camera_joint describes where the camera is relative to the arm -->
     <!-- - Even though the camera isn't moving relative to the arm, it will probably be helpful to have its own link/frame rather than just adding more visuals to the arm -->
     <!-- - For this example, the camera_link origin will be at the centre of the camera's "sensor" -->
-    <joint name="camera_joint" type="revolute">
-        <origin xyz="0 0 ${arm_length}" rpy="0 ${pi/2} 0"/>
+    <joint name="camera_joint" type="fixed">
+        <origin xyz="${arm_length} 0 ${arm_radius + 0.075}" rpy="0 0 0"/>
         <parent link="arm_link"/>
-        <child link="camera_link"/>
-        <axis xyz="0 -1 0"/>
-        <limit lower="0" upper="${pi}" velocity="100" effort="100"/>     
+        <child link="camera_link"/>        
     </joint>
 
 
@@ -150,14 +148,13 @@
     <!-- - Although we could also specify multiple collision geometries, instead we just use a single box that encompasses the whole camera -->
     <link name="camera_link">
         <visual>
-            <origin xyz="0 0 .5" rpy="0 0 0"/>
+            <origin xyz="-0.03 0 0" rpy="0 0 0"/>
             <geometry>
-                <!-- <box size="0.06 0.15 0.15" /> -->
-                <cylinder length="${arm_length}" radius="${arm_radius}" />
+                <box size="0.06 0.15 0.15" />
             </geometry>
             <material name="white" />
         </visual>
-        <!-- <visual>
+        <visual>
             <origin xyz="0.03 0 0" rpy="0 ${pi/2} 0"/>
             <geometry>
                 <cylinder length="0.06" radius="0.04" />
@@ -172,37 +169,7 @@
         </collision>
         <xacro:inertial_box mass="0.1" x="0.12" y="0.15" z="0.15">
             <origin xyz="0.0 0 0" rpy="0 0 0"/>
-        </xacro:inertial_box> -->
-    </link>
-
-    <joint name="end_joint" type="prismatic">
-        <origin xyz="${-arm_radius} 0 0" rpy="0 0 0"/>
-        <parent link="camera_link"/>
-        <child link="end_link"/>
-        <axis xyz="0 0 1"/>
-        <limit lower="0" upper="0.5" velocity="100" effort="100"/>    
-    </joint>
-
-    <link name="end_link">
-        <visual>
-            <origin xyz="0 0 0.75" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.1 0.1 0.75" />
-            </geometry>
-            <!-- <material name="green" /> -->
-            <material name="yellow">
-                <color rgba="1 1 0.2 1"/>
-            </material>
-        </visual>
-        <!-- <collision>
-            <origin xyz="0 0 0.075" rpy="0 0 0"/>
-            <geometry>
-                <box size="0.5 0.25 0.15" />
-            </geometry>
-        </collision>
-        <xacro:inertial_box mass="0.5" x="0.5" y="0.25" z="0.15">
-            <origin xyz="0 0 0.075" rpy="0 0 0"/>
-        </xacro:inertial_box> -->
+        </xacro:inertial_box>
     </link>
 
 
